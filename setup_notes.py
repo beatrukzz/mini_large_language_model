@@ -95,3 +95,18 @@ Chromebook
 
 Next:
 Start learning/using PyTorch and building the bigram language model.
+
+TOKENISATION
+
+Created a vocabulary containing every unique character in the dataset.
+
+Created two dictionaries:
+- string_to_int: maps each character to a unique integer
+- int_to_string: maps each integer back to its character
+
+Created encode() to convert text into integers and decode() to convert
+integers back into text.
+
+This is character-level tokenisation. The model needs numerical
+representations because neural networks operate on numbers rather than
+raw text.
