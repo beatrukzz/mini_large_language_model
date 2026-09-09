@@ -1,5 +1,6 @@
 WHY GPUs ARE USED FOR TRAINING NEURAL NETWORKS
 ===============================================
+GPUs make neural-network training efficient because the large matrix and tensor operations involved can be highly parallelised. A GPU can perform many of these calculations simultaneously, whereas a CPU has fewer, more general-purpose cores.
 
 CPU vs GPU
 ----------
