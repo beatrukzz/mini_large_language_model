@@ -1,0 +1,234 @@
+WHY GPUs ARE USED FOR TRAINING NEURAL NETWORKS
+===============================================
+
+CPU vs GPU
+----------
+
+A CPU (Central Processing Unit) is designed to perform a wide variety of
+general-purpose tasks. It usually has a relatively small number of powerful
+processing cores.
+
+A GPU (Graphics Processing Unit) contains a much larger number of smaller
+processing units. This allows it to perform many similar calculations at
+the same time.
+
+This difference is particularly important when training neural networks.
+
+
+Why Neural Networks Benefit From GPUs
+-------------------------------------
+
+Training a neural network involves performing a very large number of
+numerical calculations.
+
+Many of these calculations involve:
+
+- matrix multiplication
+- vector operations
+- tensor operations
+- calculating activations
+- calculating gradients
+- updating model parameters
+
+These calculations often involve thousands or millions of numbers that
+can be processed simultaneously.
+
+GPUs are designed for this type of parallel computation.
+
+
+Parallel Processing
+-------------------
+
+A CPU is very good at performing complicated sequences of instructions
+quickly, but it has a relatively limited number of cores.
+
+A GPU has many more processing units and can perform large numbers of
+similar calculations simultaneously.
+
+For example, suppose a calculation needs to multiply thousands of values.
+
+Instead of processing these operations mostly one after another, a GPU
+can perform many of them in parallel.
+
+Conceptually:
+
+CPU:
+
+calculation 1 -> calculation 2 -> calculation 3 -> calculation 4 -> ...
+
+GPU:
+
+calculation 1  \
+calculation 2   \
+calculation 3    -> performed in parallel
+calculation 4   /
+calculation 5  /
+...
+
+
+Matrix Multiplication
+---------------------
+
+One of the most important operations in neural networks is matrix
+multiplication.
+
+For example:
+
+output = input @ weights
+
+A neural network may contain millions or billions of weights, and training
+requires repeated mathematical operations involving these parameters.
+
+Matrix multiplication contains many smaller multiplication and addition
+operations that can be carried out independently.
+
+This makes matrix operations well suited to GPU parallel processing.
+
+
+Training Requires Repeated Calculations
+---------------------------------------
+
+Training is computationally expensive because the model does not process
+the training data only once.
+
+For each batch of training data, the model generally performs:
+
+1. Forward pass
+
+   The input travels through the neural network and the model produces
+   predictions.
+
+2. Loss calculation
+
+   The model's predictions are compared with the expected output to
+   measure how incorrect the predictions are.
+
+3. Backpropagation
+
+   Gradients are calculated to determine how each parameter contributed
+   to the error.
+
+4. Parameter update
+
+   The model's weights are adjusted in an attempt to reduce the loss.
+
+This process is repeated across many batches and many training iterations.
+
+Therefore, even a single training run can require an enormous number of
+mathematical operations.
+
+
+Why GPUs Improve Training Efficiency
+------------------------------------
+
+GPUs can significantly reduce training time because many of the tensor
+operations involved in neural networks can be performed in parallel.
+
+For sufficiently large workloads:
+
+CPU training:
+
+    fewer powerful cores
+            |
+            v
+    less parallel computation
+            |
+            v
+    slower large tensor operations
+
+
+GPU training:
+
+    many processing units
+            |
+            v
+    highly parallel computation
+            |
+            v
+    faster large tensor operations
+            |
+            v
+    faster model training
+
+
+CUDA
+----
+
+CUDA is NVIDIA's computing platform that allows software such as PyTorch
+to use compatible NVIDIA GPUs for general-purpose computation.
+
+PyTorch can check whether CUDA is available using:
+
+torch.cuda.is_available()
+
+The tutorial uses:
+
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
+
+This allows the program to select the GPU when CUDA is available and
+otherwise use the CPU.
+
+Tensors can then be moved to the selected device:
+
+tensor = tensor.to(device)
+
+
+My Chromebook
+-------------
+
+My Chromebook does not have access to a CUDA-compatible NVIDIA GPU, so
+PyTorch returns:
+
+torch.cuda.is_available() -> False
+
+Therefore:
+
+device = 'cpu'
+
+My model can still perform the same underlying mathematical operations,
+but large-scale training will generally take longer than it would on a
+suitable GPU.
+
+For this reason, I have reduced the size of some tensors used in the
+tutorial's GPU demonstrations.
+
+This allows me to learn and implement the same concepts without using
+unnecessarily large amounts of memory or computation.
+
+
+Important: GPU Does Not Always Mean Faster
+------------------------------------------
+
+A GPU is not automatically faster for every operation.
+
+For very small calculations, using a GPU may provide little benefit and
+can sometimes introduce additional overhead.
+
+The major advantage appears when there is a sufficiently large amount of
+parallel numerical work.
+
+Neural-network training usually satisfies this condition because it
+involves large tensors and repeated matrix operations.
+
+
+SUMMARY
+-------
+
+CPU:
+- General-purpose processor.
+- Smaller number of powerful cores.
+- Suitable for normal program execution and smaller calculations.
+- Can train neural networks, but large models can be slow.
+
+GPU:
+- Designed for highly parallel computation.
+- Contains many processing units.
+- Particularly effective for large matrix and tensor operations.
+- Can greatly reduce neural-network training time.
+
+The key reason GPUs are useful for machine learning is PARALLELISM.
+
+Neural-network training contains huge numbers of similar mathematical
+operations that can be performed simultaneously. GPUs are designed to
+perform this type of computation efficiently, which is why they are
+widely used to train large neural networks and language models.
