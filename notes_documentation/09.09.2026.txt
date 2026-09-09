@@ -1,0 +1,247 @@
+PYTORCH BASICS - LLM PROJECT NOTES
+
+Today I worked through some of the basic PyTorch concepts that I will
+need later when building the language model.
+
+
+1. IMPORTING PYTORCH
+
+import torch
+
+PyTorch is the machine learning library I am using to build the model.
+
+It allows me to create and perform mathematical operations on tensors,
+which are the main data structures used by neural networks.
+
+
+2. CPU VS GPU
+
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
+
+This checks whether a CUDA-compatible GPU is available.
+
+If CUDA is available:
+device = 'cuda'
+
+Otherwise:
+device = 'cpu'
+
+My Chromebook uses the CPU version of PyTorch, so my device is "cpu".
+
+The model can still run on a CPU, but large calculations and training
+will be slower than on a GPU.
+
+
+3. TENSORS
+
+Example:
+
+tensor = torch.tensor([[0.1, 1.2],
+                       [2.3, 3.4],
+                       [4.9, 5.2]])
+
+A tensor is a structure used by PyTorch to store numerical data.
+
+This example is a 2D tensor with:
+- 3 rows
+- 2 columns
+
+Shape = (3, 2)
+
+Tensors are important because the data, calculations and parameters
+used by neural networks are represented using tensors.
+
+
+4. RANDOM INTEGER TENSORS
+
+Example:
+
+randint = torch.randint(-100, 100, (6,))
+
+This creates a tensor containing 6 random integers.
+
+-100 = lower limit
+100 = upper limit
+(6,) = shape of the tensor
+
+The exact numbers will be different each time because they are random.
+
+
+5. TENSORS OF ZEROS
+
+Example:
+
+zeroes = torch.zeros(2, 3)
+
+This creates a 2 x 3 tensor where every value is 0.
+
+Example output:
+
+[[0, 0, 0],
+ [0, 0, 0]]
+
+
+6. TENSORS OF ONES
+
+Example:
+
+ones = torch.ones(3, 4)
+
+This creates a 3 x 4 tensor where every value is 1.
+
+These functions are useful when I need to initialise tensors with
+known starting values.
+
+
+7. TORCH.ARANGE()
+
+Example:
+
+arange = torch.arange(5)
+
+Output:
+
+[0, 1, 2, 3, 4]
+
+torch.arange() creates a sequence of values.
+
+It starts at 0 by default and stops BEFORE the number given.
+
+It is similar to Python's range(), but it returns a PyTorch tensor.
+
+
+8. TORCH.LINSPACE()
+
+Example:
+
+linspace = torch.linspace(3, 10, steps=5)
+
+Output:
+
+[3, 4.75, 6.5, 8.25, 10]
+
+torch.linspace() creates evenly spaced values between a starting
+and ending value.
+
+Here:
+
+start = 3
+end = 10
+steps = 5
+
+"steps" controls how many values are created.
+
+
+9. TORCH.EYE()
+
+Example:
+
+eye = torch.eye(5)
+
+This creates a 5 x 5 identity matrix.
+
+An identity matrix contains:
+- 1s along the main diagonal
+- 0s everywhere else
+
+Example:
+
+[1 0 0 0 0]
+[0 1 0 0 0]
+[0 0 1 0 0]
+[0 0 0 1 0]
+[0 0 0 0 1]
+
+
+10. TORCH.EMPTY()
+
+Example:
+
+a = torch.empty((2, 3))
+
+This creates space for a 2 x 3 tensor.
+
+Unlike torch.zeros() or torch.ones(), torch.empty() does not initialise
+the tensor with a particular value.
+
+The existing values should therefore not be treated as meaningful.
+
+
+11. TORCH.EMPTY_LIKE()
+
+Example:
+
+empty_like = torch.empty_like(a)
+
+This creates another empty tensor with the same shape and data type
+as an existing tensor.
+
+If "a" has shape (2, 3), empty_like will also have shape (2, 3).
+
+
+12. DTYPE
+
+PyTorch tensors have a data type (dtype).
+
+For example:
+
+dtype=torch.long
+dtype=torch.int64
+
+These specify what type of numbers are stored in the tensor.
+
+Earlier in the LLM project I used:
+
+data = torch.tensor(encode(text), dtype=torch.long)
+
+This was appropriate because each token was represented by an integer.
+
+
+13. WHY I AM LEARNING TENSORS
+
+A language model cannot directly perform calculations on raw text.
+
+The text is eventually represented numerically and stored in tensors.
+
+PyTorch then performs mathematical operations on these tensors.
+
+Understanding:
+- tensor shapes
+- tensor dimensions
+- data types
+- creating tensors
+- manipulating tensors
+
+will therefore be important when I start building and training the
+neural network.
+
+
+14. JUPYTER/KERNEL ISSUE I FIXED
+
+Jupyter became unresponsive while I was running simple PyTorch code.
+
+The actual tensor code was not the problem.
+
+I found that the Jupyter notebook/kernel connection was behaving
+incorrectly and reconnecting/restarting kernels.
+
+I made sure that the notebook was connected to:
+
+Python 3.11 (llm)
+
+This is the kernel linked to my Conda "llm" environment.
+
+Important:
+If Jupyter behaves strangely again, check the selected kernel before
+assuming there is a problem with the Python code.
+
+
+WHAT I UNDERSTAND SO FAR
+
+- PyTorch is the framework I will use to build the language model.
+- Tensors are PyTorch's main structures for storing numerical data.
+- Tensors can have different shapes and data types.
+- PyTorch provides functions for easily creating different tensors.
+- My Chromebook runs PyTorch on the CPU rather than CUDA.
+- Later, the language model will use tensors to represent and process
+  encoded text and perform neural-network calculations.
