@@ -1,0 +1,1047 @@
+PYTORCH TENSOR OPERATIONS
+LLM From Scratch – Project Notes
+==============================================
+
+
+1. OVERVIEW
+-----------
+
+This section introduces several PyTorch operations that are used when
+manipulating tensors and building neural networks.
+
+Some of these functions are general tensor operations, while others become
+particularly important when constructing a language model and, later,
+attention mechanisms.
+
+The main concepts covered are:
+
+- probability-based sampling
+- concatenating tensors
+- triangular matrices
+- masking
+- exponentials
+- tensor dimensions and transposition
+- stacking tensors
+- linear layers
+- softmax
+
+Several of these concepts connect directly to how a language model
+processes information and generates new tokens.
+
+
+2. PROBABILITY-BASED SAMPLING
+-----------------------------
+
+PyTorch provides:
+
+torch.multinomial()
+
+This allows an index to be sampled according to a probability distribution.
+
+Example:
+
+probabilities = torch.tensor([0.1, 0.9])
+
+samples = torch.multinomial(
+    probabilities,
+    num_samples=10,
+    replacement=True
+)
+
+The tensor:
+
+[0.1, 0.9]
+
+can be interpreted as:
+
+Index 0 -> probability 0.1 -> 10%
+Index 1 -> probability 0.9 -> 90%
+
+Therefore, when sampling repeatedly, index 1 should generally appear much
+more frequently than index 0.
+
+The result could look like:
+
+tensor([1, 1, 1, 0, 1, 1, 1, 1, 0, 1])
+
+The exact result can change each time because sampling is random.
+
+
+3. REPLACEMENT
+--------------
+
+The argument:
+
+replacement=True
+
+means that after an index is selected, it remains available to be selected
+again.
+
+For example:
+
+1 -> selected
+1 -> can be selected again
+1 -> can be selected again
+
+This allows the same value to appear multiple times in the output.
+
+This is useful when generating language because the same token may need to
+be generated multiple times.
+
+
+4. WHY MULTINOMIAL SAMPLING MATTERS FOR AN LLM
+-----------------------------------------------
+
+A language model eventually produces a probability distribution over the
+possible next tokens.
+
+For example:
+
+Token       Probability
+
+"the"          0.50
+"and"          0.25
+"house"        0.15
+"blue"         0.10
+
+The model does not necessarily have to choose the highest probability every
+time.
+
+Instead, a function such as torch.multinomial() can sample from the
+distribution.
+
+Higher-probability tokens are more likely to be selected, but lower-
+probability tokens still have a chance of being selected.
+
+This allows generated text to contain variation.
+
+The basic process is:
+
+Model
+  |
+  v
+Probability distribution
+  |
+  v
+torch.multinomial()
+  |
+  v
+Sample a token
+  |
+  v
+Generate the next token
+
+
+5. CONCATENATING TENSORS – TORCH.CAT()
+--------------------------------------
+
+torch.cat() combines tensors along an EXISTING dimension.
+
+"cat" is short for concatenate.
+
+Example:
+
+tensor = torch.tensor([1, 2, 3, 4])
+
+out = torch.cat(
+    (tensor, torch.tensor([5])),
+    dim=0
+)
+
+Result:
+
+tensor([1, 2, 3, 4, 5])
+
+Conceptually:
+
+[1, 2, 3, 4] + [5]
+
+becomes:
+
+[1, 2, 3, 4, 5]
+
+
+The argument:
+
+dim=0
+
+specifies the dimension along which the tensors should be joined.
+
+The tensors must have compatible shapes for the requested concatenation.
+
+
+6. DIMENSIONS
+-------------
+
+Tensor dimensions are numbered beginning from 0.
+
+For a tensor with shape:
+
+(2, 3, 4)
+
+the dimensions are:
+
+Dimension 0 -> size 2
+Dimension 1 -> size 3
+Dimension 2 -> size 4
+
+This can be visualised as:
+
+Dimension:     0   1   2
+Shape:        (2,  3,  4)
+
+Understanding dimensions is important because many PyTorch operations ask
+which dimension an operation should act across.
+
+Examples include:
+
+torch.cat(..., dim=0)
+
+F.softmax(..., dim=0)
+
+tensor.transpose(0, 2)
+
+
+7. LOWER TRIANGULAR MATRICES – TORCH.TRIL()
+-------------------------------------------
+
+torch.tril() returns the lower triangular part of a matrix.
+
+Example:
+
+out = torch.tril(torch.ones(5, 5))
+
+The original matrix contains only ones:
+
+1 1 1 1 1
+1 1 1 1 1
+1 1 1 1 1
+1 1 1 1 1
+1 1 1 1 1
+
+After torch.tril():
+
+1 0 0 0 0
+1 1 0 0 0
+1 1 1 0 0
+1 1 1 1 0
+1 1 1 1 1
+
+Values on and below the main diagonal remain.
+
+Values above the main diagonal are replaced with zero.
+
+"tril" can be remembered as:
+
+TRIangular Lower
+
+
+8. WHY A LOWER TRIANGULAR MATRIX MATTERS FOR LANGUAGE MODELS
+-------------------------------------------------------------
+
+When training an autoregressive language model, a token should not be able
+to use information from future tokens when predicting what comes next.
+
+Suppose a sequence contains five tokens:
+
+Token 1
+Token 2
+Token 3
+Token 4
+Token 5
+
+When processing Token 3, the model may use information from:
+
+Token 1
+Token 2
+Token 3
+
+but it should not be allowed to access:
+
+Token 4
+Token 5
+
+because those tokens occur in the future.
+
+A lower triangular matrix naturally represents this restriction:
+
+            INFORMATION AVAILABLE
+
+Token 1     1 0 0 0 0
+Token 2     1 1 0 0 0
+Token 3     1 1 1 0 0
+Token 4     1 1 1 1 0
+Token 5     1 1 1 1 1
+
+A 1 represents an allowed position.
+
+A 0 represents a future position that should be blocked.
+
+This idea later becomes important when constructing causal/self-attention
+masks.
+
+
+9. BOOLEAN MASKS
+----------------
+
+Comparisons in PyTorch can create tensors containing Boolean values:
+
+True
+False
+
+For example:
+
+mask = torch.tril(torch.ones(5, 5)) == 0
+
+The comparison:
+
+== 0
+
+asks whether each individual element is equal to zero.
+
+Positions containing zero become:
+
+True
+
+and positions containing one become:
+
+False
+
+This produces a mask identifying particular positions in the tensor.
+
+Masks allow selected elements to be treated differently from the rest of
+the tensor.
+
+
+10. MASKED_FILL()
+-----------------
+
+masked_fill() replaces values wherever a Boolean mask is True.
+
+Conceptually:
+
+tensor.masked_fill(mask, replacement_value)
+
+means:
+
+For every position where mask == True,
+replace the original value with replacement_value.
+
+For attention-related calculations, a common replacement value is:
+
+float('-inf')
+
+which represents negative infinity.
+
+For example:
+
+masked = values.masked_fill(mask, float('-inf'))
+
+Future positions can therefore be changed to:
+
+-inf
+
+while allowed positions remain unchanged.
+
+
+11. WHY NEGATIVE INFINITY IS USED
+---------------------------------
+
+Negative infinity is useful because attention probabilities will later
+pass through a softmax operation.
+
+Softmax involves exponential calculations.
+
+Mathematically:
+
+e^(-infinity) -> 0
+
+Therefore, if a future position is replaced with:
+
+-inf
+
+before softmax is applied, its resulting probability becomes effectively:
+
+0
+
+This means the model assigns no attention to that position.
+
+The process is approximately:
+
+Future position
+      |
+      v
+Mask identifies it
+      |
+      v
+Replace score with -infinity
+      |
+      v
+Apply softmax
+      |
+      v
+Probability becomes 0
+      |
+      v
+Future information cannot be attended to
+
+
+12. TORCH.EXP()
+---------------
+
+torch.exp() applies the exponential function to every element of a tensor.
+
+The exponential function is:
+
+e^x
+
+where:
+
+e ≈ 2.71828
+
+Examples:
+
+e^0 = 1
+
+e^1 ≈ 2.718
+
+e^2 ≈ 7.389
+
+As x becomes very negative:
+
+e^x approaches 0
+
+Therefore:
+
+e^(-infinity) = 0
+
+This relationship helps explain why negative infinity can be used to mask
+values before applying softmax.
+
+
+13. TRANSPOSING TENSORS
+-----------------------
+
+transpose() swaps two dimensions of a tensor.
+
+Example:
+
+input = torch.zeros(2, 3, 4)
+
+The original shape is:
+
+(2, 3, 4)
+
+The dimensions are:
+
+Dimension:     0   1   2
+Shape:        (2,  3,  4)
+
+If:
+
+out = input.transpose(0, 2)
+
+dimensions 0 and 2 exchange positions.
+
+Therefore:
+
+Before:
+
+(2, 3, 4)
+
+After:
+
+(4, 3, 2)
+
+Dimension 1 remains unchanged.
+
+
+14. WHY TRANSPOSE IS USEFUL
+---------------------------
+
+Neural-network calculations often require tensors to have their dimensions
+in a particular order.
+
+A tensor might contain dimensions representing things such as:
+
+- batch
+- sequence
+- features
+- attention heads
+
+Different mathematical operations may expect these dimensions in different
+positions.
+
+Transposition allows the arrangement of the tensor to be changed without
+changing the underlying information it represents.
+
+
+15. TORCH.STACK()
+-----------------
+
+torch.stack() combines multiple tensors by creating a NEW dimension.
+
+Example:
+
+tensor1 = torch.tensor([1, 2, 3])
+tensor2 = torch.tensor([4, 5, 6])
+tensor3 = torch.tensor([7, 8, 9])
+
+stacked_tensor = torch.stack(
+    [tensor1, tensor2, tensor3]
+)
+
+Result:
+
+tensor([
+    [1, 2, 3],
+    [4, 5, 6],
+    [7, 8, 9]
+])
+
+Each original tensor is one-dimensional.
+
+After stacking them together, the result is two-dimensional.
+
+
+16. TORCH.CAT() VS TORCH.STACK()
+--------------------------------
+
+These functions both combine tensors, but they behave differently.
+
+torch.cat():
+
+Combines tensors along an EXISTING dimension.
+
+torch.stack():
+
+Combines tensors by creating a NEW dimension.
+
+
+Example:
+
+A = [1, 2, 3]
+
+B = [4, 5, 6]
+
+
+Concatenation:
+
+torch.cat((A, B))
+
+Result:
+
+[1, 2, 3, 4, 5, 6]
+
+
+Stacking:
+
+torch.stack((A, B))
+
+Result:
+
+[
+ [1, 2, 3],
+ [4, 5, 6]
+]
+
+
+The key distinction is:
+
+CAT   -> existing dimension
+STACK -> new dimension
+
+
+17. LINEAR LAYERS
+-----------------
+
+PyTorch provides neural-network components through:
+
+torch.nn
+
+A linear layer can be created using:
+
+nn.Linear()
+
+Example:
+
+linear = nn.Linear(3, 3, bias=False)
+
+This describes a transformation with:
+
+3 input features
+        |
+        v
+Linear transformation
+        |
+        v
+3 output features
+
+
+A linear layer contains learnable weights.
+
+The general mathematical idea is:
+
+output = input × weights + bias
+
+Often written as:
+
+y = Wx + b
+
+The exact matrix orientation depends on the notation being used, but the
+important concept is that the input is transformed using a matrix of
+weights.
+
+
+18. WEIGHTS
+-----------
+
+Weights are numerical parameters inside a neural network.
+
+When a neural network is first created, its weights are normally
+initialised to starting values.
+
+During training, these weights are adjusted.
+
+The aim is to find values for the weights that allow the model to make
+better predictions.
+
+A simplified view of training is:
+
+Initial weights
+      |
+      v
+Model makes prediction
+      |
+      v
+Calculate error/loss
+      |
+      v
+Calculate gradients
+      |
+      v
+Adjust weights
+      |
+      v
+Make improved predictions
+
+Large neural networks contain very large numbers of these learnable
+parameters.
+
+
+19. BIAS
+--------
+
+A standard linear layer can perform a calculation conceptually written as:
+
+y = Wx + b
+
+where:
+
+x = input
+W = weight matrix
+b = bias
+y = output
+
+The bias is another learnable parameter that is added after the weighted
+transformation.
+
+If:
+
+bias=False
+
+then the bias term is removed.
+
+The operation becomes approximately:
+
+y = Wx
+
+In the tutorial:
+
+nn.Linear(3, 3, bias=False)
+
+therefore creates a linear transformation with weights but without a
+separate bias vector.
+
+
+20. WHY LINEAR LAYERS MATTER
+----------------------------
+
+Linear transformations are fundamental components of neural networks.
+
+They allow learned weight matrices to transform numerical representations.
+
+For a language model, these numerical representations can eventually
+represent information about tokens and their context.
+
+Matrix multiplication is therefore not just a PyTorch exercise.
+
+Operations involving:
+
+input @ weights
+
+are fundamental to how information moves through a neural network.
+
+The important relationship is:
+
+Tensors
+   |
+   v
+Matrix operations
+   |
+   v
+Learned weights
+   |
+   v
+Transform representations
+   |
+   v
+Neural-network computation
+
+
+21. RAW MODEL SCORES – LOGITS
+-----------------------------
+
+A neural network can produce raw numerical scores for different possible
+outputs.
+
+These raw scores are commonly called:
+
+LOGITS
+
+For example, suppose a model produces:
+
+Token A -> 1.0
+Token B -> 2.0
+Token C -> 3.0
+
+These numbers are not yet probabilities.
+
+They do not need to:
+
+- lie between 0 and 1
+- add up to 1
+
+They are simply scores produced by the model.
+
+To interpret them as a probability distribution, an operation such as
+softmax can be applied.
+
+
+22. SOFTMAX
+-----------
+
+Softmax converts a collection of numerical scores into a probability
+distribution.
+
+In PyTorch:
+
+import torch.nn.functional as F
+
+tensor = torch.tensor([1.0, 2.0, 3.0])
+
+softmax_output = F.softmax(tensor, dim=0)
+
+The result is approximately:
+
+[0.0900, 0.2447, 0.6652]
+
+These values have two important properties:
+
+1. Every value is between 0 and 1.
+
+2. The values add up to 1.
+
+Therefore they can be interpreted as probabilities.
+
+
+23. SOFTMAX FORMULA
+-------------------
+
+For a score x_i, softmax calculates:
+
+                 e^(x_i)
+P_i = -------------------------------
+       sum of e^(x_j) for all values
+
+
+The exponential function ensures that every resulting value is positive.
+
+Dividing by the total then ensures that all probabilities add up to 1.
+
+
+For example:
+
+Scores:
+
+1
+2
+3
+
+become approximately:
+
+0.0900
+0.2447
+0.6652
+
+The largest score receives the largest probability.
+
+However, the other possibilities can still receive non-zero probabilities.
+
+
+24. WHY SOFTMAX MATTERS FOR LANGUAGE MODELS
+--------------------------------------------
+
+A language model needs to determine how likely different tokens are to
+appear next.
+
+The neural network can first produce logits:
+
+Token        Logit
+
+A             0.5
+B             1.2
+C             3.0
+D            -0.4
+
+Softmax converts these raw scores into probabilities:
+
+Logits
+   |
+   v
+Softmax
+   |
+   v
+Probability distribution
+
+The model can then use this distribution when deciding which token to
+generate.
+
+
+25. SOFTMAX AND MULTINOMIAL SAMPLING
+------------------------------------
+
+The softmax and multinomial operations connect together.
+
+A simplified text-generation process is:
+
+Neural network
+      |
+      v
+Produces logits
+      |
+      v
+Softmax
+      |
+      v
+Token probabilities
+      |
+      v
+torch.multinomial()
+      |
+      v
+Sample next token
+
+
+For example:
+
+Model logits:
+
+A -> 1.0
+B -> 2.0
+C -> 3.0
+
+After softmax:
+
+A -> 0.09
+B -> 0.24
+C -> 0.67
+
+torch.multinomial() can then sample one of these indices according to the
+probabilities.
+
+C is most likely to be selected, but A and B remain possible.
+
+This allows language generation to contain some variation instead of always
+choosing exactly the same token.
+
+
+26. MASKING AND SOFTMAX
+-----------------------
+
+The triangular mask, negative infinity and softmax concepts also connect
+together.
+
+Suppose attention scores are:
+
+[2.1, 1.4, 3.2, 0.8]
+
+but the final two positions correspond to future tokens.
+
+The mask can change them to:
+
+[2.1, 1.4, -inf, -inf]
+
+Softmax is then applied.
+
+Because:
+
+e^(-inf) = 0
+
+the future positions receive zero probability.
+
+Conceptually:
+
+Attention scores
+       |
+       v
+Identify future positions
+       |
+       v
+masked_fill(-inf)
+       |
+       v
+Softmax
+       |
+       v
+Future positions receive probability 0
+
+
+This is one of the mathematical ideas behind causal attention.
+
+
+27. HOW THESE CONCEPTS CONNECT
+------------------------------
+
+The functions in this section initially appear to be separate PyTorch
+examples, but several of them form parts of the same larger process.
+
+TENSOR MANIPULATION
+
+torch.cat()
+torch.stack()
+transpose()
+
+These allow tensors to be combined and rearranged.
+
+
+NEURAL-NETWORK COMPUTATION
+
+nn.Linear()
+matrix multiplication
+weights
+
+These allow the network to transform numerical representations.
+
+
+ATTENTION MASKING
+
+torch.tril()
+Boolean masks
+masked_fill(-inf)
+softmax()
+
+These can be used to prevent a token from accessing future information.
+
+
+TOKEN GENERATION
+
+model logits
+softmax()
+torch.multinomial()
+
+These allow model outputs to become probabilities from which the next token
+can be sampled.
+
+
+28. CONNECTION TO MY LLM PROJECT
+--------------------------------
+
+Earlier in the project, I converted the text from The Odyssey into
+character-level integer tokens.
+
+The overall project is beginning to connect as follows:
+
+Raw text
+   |
+   v
+Characters
+   |
+   v
+Integer token IDs
+   |
+   v
+PyTorch tensors
+   |
+   v
+Neural-network calculations
+   |
+   v
+Model produces logits
+   |
+   v
+Softmax converts logits to probabilities
+   |
+   v
+Multinomial sampling
+   |
+   v
+Select next token
+   |
+   v
+Generate text
+
+
+As the model becomes more advanced, masking can also control which previous
+tokens are available when calculating predictions.
+
+
+29. KEY IDEAS TO REMEMBER
+-------------------------
+
+1. torch.multinomial() samples indices according to a probability
+   distribution.
+
+2. replacement=True allows the same index to be sampled repeatedly.
+
+3. torch.cat() combines tensors along an existing dimension.
+
+4. torch.stack() combines tensors by creating a new dimension.
+
+5. Tensor dimensions are numbered starting from 0.
+
+6. transpose() swaps specified tensor dimensions.
+
+7. torch.tril() creates/returns the lower triangular part of a matrix.
+
+8. Lower triangular matrices can be used to represent which previous
+   tokens are visible to each position.
+
+9. Boolean masks identify tensor positions that should be treated
+   differently.
+
+10. masked_fill() replaces selected values according to a mask.
+
+11. Replacing future attention scores with -infinity causes them to receive
+    effectively zero probability after softmax.
+
+12. torch.exp() applies the exponential function e^x.
+
+13. nn.Linear() performs a learned linear transformation.
+
+14. Weights are parameters that are adjusted during training.
+
+15. A bias is an additional learnable value used in a linear layer.
+
+16. Logits are raw model output scores, not probabilities.
+
+17. Softmax converts logits into a probability distribution.
+
+18. Softmax probabilities are between 0 and 1 and add up to 1.
+
+19. A language model can use softmax followed by multinomial sampling to
+    select its next token.
+
+20. These tensor operations provide some of the building blocks that will
+    later be used to construct the language model and its attention
+    mechanisms.
