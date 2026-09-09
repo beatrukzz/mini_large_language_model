@@ -1,7 +1,7 @@
 EMBEDDINGS AND VECTOR REPRESENTATIONS
 LLM From Scratch – Project Notes
 ==============================================
-
+A token ID is just an identifier. An embedding layer uses that ID to look up a learnable vector, giving the neural network a numerical representation of the token that it can process using operations such as matrix multiplication.
 
 1. OVERVIEW
 -----------
