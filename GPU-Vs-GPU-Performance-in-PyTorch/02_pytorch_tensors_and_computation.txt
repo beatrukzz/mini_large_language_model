@@ -1,0 +1,629 @@
+PYTORCH TENSORS AND COMPUTATION
+LLM From Scratch – Project Notes
+==============================================
+
+
+1. WHY PYTORCH IS USED
+----------------------
+
+PyTorch is a machine learning framework that provides the tools needed
+to represent data numerically, perform mathematical operations and build
+and train neural networks.
+
+The main data structure used by PyTorch is the tensor.
+
+Language models cannot perform calculations directly on raw text.
+Eventually, text is converted into numerical representations which can
+be stored and processed as tensors.
+
+During an LLM, tensors can represent:
+
+- encoded tokens
+- batches of text
+- embeddings
+- model weights and parameters
+- attention scores
+- predictions produced by the model
+
+Understanding tensors is therefore important before building the actual
+language model.
+
+
+2. WHAT IS A TENSOR?
+--------------------
+
+A tensor is a multidimensional structure containing numerical values.
+
+A scalar can be thought of as a 0-dimensional tensor.
+
+Example:
+
+5
+
+A vector can be represented as a 1-dimensional tensor:
+
+[1, 2, 3]
+
+A matrix can be represented as a 2-dimensional tensor:
+
+[1  2]
+[3  4]
+[5  6]
+
+Higher-dimensional tensors extend the same idea to more dimensions.
+
+Example in PyTorch:
+
+tensor = torch.tensor([[0.1, 1.2],
+                       [2.3, 3.4],
+                       [4.9, 5.2]])
+
+This creates a 2D tensor with 3 rows and 2 columns.
+
+Its shape is:
+
+(3, 2)
+
+Tensor shape is important because mathematical operations generally
+require compatible dimensions.
+
+
+3. CREATING RANDOM TENSORS
+--------------------------
+
+torch.rand() creates tensors containing random values between 0 and 1.
+
+Example:
+
+x = torch.rand(3, 4)
+
+This creates a tensor with:
+
+3 rows
+4 columns
+
+Shape = (3, 4)
+
+
+torch.randint() creates random integers.
+
+Example:
+
+x = torch.randint(-100, 100, (6,))
+
+This creates six random integers.
+
+-100 is the lower bound.
+100 is the upper bound.
+(6,) specifies the shape.
+
+Random tensors are particularly important in machine learning because
+neural-network parameters are often initially given random values before
+training begins.
+
+
+4. TENSORS OF ZEROS
+-------------------
+
+torch.zeros() creates a tensor in which every element is zero.
+
+Example:
+
+zeroes = torch.zeros(2, 3)
+
+Result:
+
+[0  0  0]
+[0  0  0]
+
+Shape = (2, 3)
+
+Zero tensors are useful when a calculation needs to begin from a known
+initial state.
+
+
+5. TENSORS OF ONES
+------------------
+
+torch.ones() creates a tensor where every element is one.
+
+Example:
+
+ones = torch.ones(3, 4)
+
+Result:
+
+[1  1  1  1]
+[1  1  1  1]
+[1  1  1  1]
+
+Shape = (3, 4)
+
+
+6. TORCH.ARANGE()
+-----------------
+
+torch.arange() creates a sequence of values over a specified range.
+
+Example:
+
+x = torch.arange(5)
+
+Result:
+
+[0, 1, 2, 3, 4]
+
+The ending value is not included.
+
+This is similar to Python's range() function, except that torch.arange()
+returns a PyTorch tensor.
+
+
+A start and end can also be specified:
+
+torch.arange(2, 7)
+
+Result:
+
+[2, 3, 4, 5, 6]
+
+
+7. TORCH.LINSPACE()
+-------------------
+
+torch.linspace() generates evenly spaced values between two endpoints.
+
+Example:
+
+x = torch.linspace(3, 10, steps=5)
+
+Result:
+
+[3.00, 4.75, 6.50, 8.25, 10.00]
+
+Here:
+
+start = 3
+end = 10
+number of values = 5
+
+Unlike arange(), where the sequence is mainly controlled by the range
+and step size, linspace() is useful when a specific number of evenly
+spaced values is required.
+
+
+8. IDENTITY MATRICES – TORCH.EYE()
+----------------------------------
+
+torch.eye() creates an identity matrix.
+
+Example:
+
+I = torch.eye(5)
+
+Result:
+
+[1 0 0 0 0]
+[0 1 0 0 0]
+[0 0 1 0 0]
+[0 0 0 1 0]
+[0 0 0 0 1]
+
+An identity matrix has:
+
+1s on the main diagonal
+0s everywhere else
+
+The identity matrix is important in linear algebra because multiplying
+a matrix by an appropriately sized identity matrix leaves it unchanged.
+
+AI = A
+
+
+9. TORCH.EMPTY()
+----------------
+
+torch.empty() allocates memory for a tensor without deliberately
+initialising its values.
+
+Example:
+
+x = torch.empty((2, 3))
+
+This creates space for a tensor with shape (2, 3).
+
+The values initially displayed should not be treated as meaningful.
+They may simply be values already present in the allocated memory.
+
+This differs from:
+
+torch.zeros()
+
+and:
+
+torch.ones()
+
+because those functions explicitly initialise every element.
+
+
+10. TORCH.EMPTY_LIKE()
+----------------------
+
+torch.empty_like() creates an empty tensor based on an existing tensor.
+
+Example:
+
+a = torch.empty((2, 3), dtype=torch.int64)
+
+b = torch.empty_like(a)
+
+b will have the same:
+
+- shape
+- data type
+
+as a.
+
+This is useful when a new tensor needs to have the same structure as an
+existing tensor.
+
+
+11. DATA TYPES (DTYPE)
+----------------------
+
+Every PyTorch tensor has a data type.
+
+The data type determines what kind of numerical values are stored and
+how they are represented in memory.
+
+Examples include:
+
+torch.float32
+torch.float64
+torch.int32
+torch.int64
+torch.long
+
+torch.long is an alias for a 64-bit integer type.
+
+Earlier in the language-model notebook I used:
+
+data = torch.tensor(encode(text), dtype=torch.long)
+
+The encoded text consists of integer token IDs, so an integer data type
+is appropriate.
+
+For example, characters might be represented as:
+
+'H' -> 31
+'e' -> 52
+'l' -> 59
+'l' -> 59
+'o' -> 62
+
+The tensor therefore stores integer identifiers rather than the original
+characters.
+
+
+12. CPU AND GPU COMPUTATION
+---------------------------
+
+PyTorch can perform calculations on different hardware devices.
+
+The tutorial checks the available device using:
+
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
+
+This means:
+
+If CUDA is available -> use CUDA
+Otherwise -> use CPU
+
+CUDA allows compatible NVIDIA GPUs to perform calculations used by
+PyTorch.
+
+My Chromebook does not have a CUDA-compatible environment, so:
+
+torch.cuda.is_available()
+
+returns:
+
+False
+
+and:
+
+device = 'cpu'
+
+This does not change the mathematical model being implemented.
+
+It means the calculations are performed by the CPU rather than an
+NVIDIA GPU.
+
+
+13. WHY GPUS ARE USED FOR MACHINE LEARNING
+-------------------------------------------
+
+Neural networks require very large numbers of mathematical operations,
+particularly operations involving matrices and tensors.
+
+GPUs contain many processing units that can perform large numbers of
+similar calculations in parallel.
+
+This makes GPUs particularly suitable for operations such as:
+
+- matrix multiplication
+- neural-network training
+- processing large batches of data
+
+A CPU is designed for more general-purpose computation and normally has
+far fewer processing cores.
+
+Therefore, the same model can generally be implemented on either CPU or
+GPU, but large training workloads can take substantially longer on CPU.
+
+
+14. MOVING TENSORS TO A DEVICE
+------------------------------
+
+A tensor can be moved to the selected device using:
+
+x = x.to(device)
+
+For example:
+
+x = torch.rand(100, 100).to(device)
+
+If:
+
+device = 'cuda'
+
+the tensor is moved to the GPU.
+
+If:
+
+device = 'cpu'
+
+the tensor remains on or is moved to the CPU.
+
+Using a variable called "device" makes code more portable because the
+same code can automatically use the available hardware.
+
+
+15. MATRIX MULTIPLICATION
+-------------------------
+
+The @ operator performs matrix multiplication.
+
+Example:
+
+C = A @ B
+
+Matrix multiplication is NOT the same as multiplying corresponding
+elements.
+
+Suppose:
+
+A = [1  2]
+    [3  4]
+
+B = [5  6]
+    [7  8]
+
+Then:
+
+A @ B
+
+produces:
+
+[19  22]
+[43  50]
+
+Each output value is calculated using a row from the first matrix and
+a column from the second matrix.
+
+For example:
+
+19 = (1 × 5) + (2 × 7)
+
+Matrix multiplication is extremely important in neural networks.
+
+A simplified neural-network layer often involves an operation of the
+form:
+
+output = input @ weights
+
+Later in the LLM, matrix multiplication will be used extensively when
+working with learned parameters, embeddings and attention.
+
+
+16. ELEMENT-WISE MULTIPLICATION
+-------------------------------
+
+Element-wise multiplication is different from matrix multiplication.
+
+For example:
+
+A = [1  2]
+    [3  4]
+
+B = [5  6]
+    [7  8]
+
+Element-wise multiplication gives:
+
+[1×5  2×6]
+[3×7  4×8]
+
+=
+
+[5   12]
+[21  32]
+
+Each element is simply multiplied by the element occupying the same
+position in the other array/tensor.
+
+In the tutorial I experimented with:
+
+np.multiply(...)
+
+This performs element-wise multiplication.
+
+Important distinction:
+
+@               -> matrix multiplication
+
+np.multiply()   -> element-wise multiplication
+
+These operations perform different amounts and types of computation, so
+their execution times should not be interpreted as a direct benchmark
+of the libraries themselves.
+
+
+17. TIMING OPERATIONS
+---------------------
+
+Python's time module can be used to measure approximately how long a
+calculation takes.
+
+Example:
+
+start_time = time.time()
+
+# calculation
+
+end_time = time.time()
+
+elapsed_time = end_time - start_time
+
+print(elapsed_time)
+
+The logic is:
+
+elapsed time = finishing time - starting time
+
+This can be used to compare how long different numerical operations
+take.
+
+
+18. LARGE TENSORS AND MEMORY
+----------------------------
+
+The tutorial uses very large tensors to demonstrate the advantage of
+GPU computation.
+
+I reduced the dimensions of these tensors because I am running the
+project on a Chromebook with limited RAM.
+
+This is important because the number of elements in a tensor grows very
+quickly as dimensions increase.
+
+For example:
+
+100 × 100 × 100 × 100
+
+contains:
+
+100,000,000 values
+
+If each value is stored as a 32-bit floating-point number, each value
+requires 4 bytes.
+
+Therefore one tensor requires approximately:
+
+100,000,000 × 4 bytes
+= 400,000,000 bytes
+≈ 400 MB
+
+Several tensors of this size can consume multiple gigabytes of memory.
+
+Reducing the tensor dimensions allows me to understand and reproduce
+the calculation without unnecessarily exhausting the available memory.
+
+
+19. CONNECTION TO THE LANGUAGE MODEL
+------------------------------------
+
+These PyTorch examples are not yet the language model itself.
+
+They introduce the numerical tools that will be required to construct
+the model.
+
+The overall process will eventually look approximately like:
+
+Raw text
+    |
+    v
+Tokenisation / encoding
+    |
+    v
+Integer token IDs
+    |
+    v
+PyTorch tensors
+    |
+    v
+Embeddings and model parameters
+    |
+    v
+Matrix/tensor operations
+    |
+    v
+Neural network
+    |
+    v
+Predictions for the next token
+
+
+The earlier part of my project converted characters from The Odyssey
+into integer IDs.
+
+PyTorch then allows those integer IDs and later numerical
+representations to be processed efficiently.
+
+This connects the text-processing stage of the project to the
+mathematical operations required by the neural network.
+
+
+20. KEY IDEAS TO REMEMBER
+-------------------------
+
+1. A tensor is a multidimensional structure containing numerical data.
+
+2. Neural networks operate on numerical representations rather than raw
+   text.
+
+3. Tensor shape describes the dimensions of the data.
+
+4. Tensor dtype determines the type of values being stored.
+
+5. torch.zeros() and torch.ones() create tensors with known initial
+   values.
+
+6. torch.rand() and torch.randint() generate random tensors.
+
+7. torch.arange() generates a sequence over a range.
+
+8. torch.linspace() generates a chosen number of evenly spaced values.
+
+9. torch.eye() creates an identity matrix.
+
+10. torch.empty() allocates a tensor without deliberately initialising
+    its values.
+
+11. @ represents matrix multiplication.
+
+12. Element-wise multiplication and matrix multiplication are different
+    mathematical operations.
+
+13. GPUs can accelerate the large parallel numerical calculations used
+    by neural networks.
+
+14. My implementation currently uses the CPU because CUDA requires
+    compatible NVIDIA hardware.
+
+15. The underlying mathematical operations and model architecture can
+    still be implemented on CPU; computation is simply slower for large
+    workloads.
+
+16. These PyTorch fundamentals provide the numerical foundation needed
+    for the later stages of the language model.
