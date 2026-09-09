@@ -1,0 +1,1067 @@
+EMBEDDINGS AND VECTOR REPRESENTATIONS
+LLM From Scratch – Project Notes
+==============================================
+
+
+1. OVERVIEW
+-----------
+
+A language model cannot directly perform mathematical operations on words,
+characters or other pieces of text.
+
+The text first needs to be converted into numerical representations.
+
+Earlier in this project, characters were converted into integer token IDs.
+
+For example:
+
+'a' -> 0
+'b' -> 1
+'c' -> 2
+'d' -> 3
+
+These integer values allow tokens to be identified, but they are only
+labels.
+
+The number assigned to a token does not describe the meaning or properties
+of that token.
+
+An embedding layer provides the next step.
+
+It maps each token ID to a vector of numerical values that can be processed
+and learned by the neural network.
+
+
+2. WHAT IS A VECTOR?
+--------------------
+
+A vector is an ordered collection of numbers.
+
+For example:
+
+[2.0, 4.0]
+
+is a two-dimensional vector.
+
+Another example:
+
+[0.2, -0.8, 1.4, 0.1]
+
+is a four-dimensional vector.
+
+The number of values in the vector is its dimensionality.
+
+Therefore:
+
+[2.0, 4.0]
+
+has dimension 2.
+
+and:
+
+[0.2, -0.8, 1.4, 0.1]
+
+has dimension 4.
+
+
+In machine learning, vectors are used to represent information in a form
+that mathematical operations can be performed on.
+
+
+3. WHY VECTORS ARE USEFUL
+-------------------------
+
+Neural networks operate using numerical calculations.
+
+These include:
+
+- matrix multiplication
+- addition
+- multiplication
+- dot products
+- linear transformations
+- probability calculations
+
+Representing information using vectors means that these mathematical
+operations can be applied to the data.
+
+Instead of the neural network receiving:
+
+"Odysseus"
+
+it receives numerical representations that can be manipulated using
+linear algebra.
+
+This is a fundamental idea in machine learning:
+
+Information
+    |
+    v
+Numerical representation
+    |
+    v
+Vectors / tensors
+    |
+    v
+Mathematical operations
+    |
+    v
+Neural network computation
+
+
+4. TOKEN IDs ARE NOT EMBEDDINGS
+-------------------------------
+
+It is important to distinguish between a token ID and an embedding.
+
+Suppose the vocabulary is:
+
+Token       ID
+
+a           0
+b           1
+c           2
+d           3
+
+
+The values:
+
+0, 1, 2, 3
+
+are identifiers.
+
+They allow the computer to distinguish between the tokens.
+
+However, the IDs themselves should not be interpreted numerically.
+
+For example:
+
+d = 3
+b = 1
+
+does NOT mean:
+
+d is three times b
+
+or:
+
+d is more important than b.
+
+
+The token IDs simply identify positions in the vocabulary.
+
+
+5. WHAT IS AN EMBEDDING?
+------------------------
+
+An embedding is a vector used to represent an item such as a token.
+
+Instead of representing a token only as:
+
+Token 3
+
+the model can represent it using a vector:
+
+Token 3 -> [0.21, -0.46, 0.83, 0.14]
+
+The values in this vector form the token's embedding.
+
+If the embedding dimension were 4, every token would receive four values.
+
+For example:
+
+Token 0 -> [ 0.14, -0.27,  0.81,  0.32]
+Token 1 -> [-0.55,  0.12,  0.41, -0.73]
+Token 2 -> [ 0.63,  0.29, -0.18,  0.54]
+Token 3 -> [ 0.21, -0.46,  0.83,  0.14]
+
+These vectors can then be used in neural-network calculations.
+
+
+6. EMBEDDING DIMENSION
+----------------------
+
+The embedding dimension determines how many numerical values are used to
+represent each token.
+
+For example:
+
+embedding_dim = 3
+
+means each token is represented by three numbers.
+
+Example:
+
+Token 4 -> [0.7, -0.2, 0.5]
+
+
+If:
+
+embedding_dim = 100
+
+then each token is represented by a vector containing 100 values.
+
+Conceptually:
+
+Token 4 -> [x1, x2, x3, ..., x100]
+
+
+A larger embedding dimension gives the model a larger numerical space in
+which to represent tokens.
+
+However, larger embeddings also require more parameters, memory and
+computation.
+
+
+7. EMBEDDING SPACE
+------------------
+
+If each token is represented by a vector, these vectors can be thought of
+as points in a multidimensional space.
+
+For a two-dimensional embedding, this is easy to imagine:
+
+Token A -> [1.0, 2.0]
+Token B -> [1.2, 2.1]
+Token C -> [-3.0, 0.5]
+
+Each pair of values describes a point in a 2D coordinate system.
+
+Real neural networks normally use many more dimensions.
+
+For example:
+
+embedding_dim = 100
+
+means each token exists as a point in a 100-dimensional vector space.
+
+This cannot be visualised directly in the same way as a 2D graph, but the
+mathematical principle is the same.
+
+
+8. EMBEDDING TABLE
+------------------
+
+An embedding layer can be thought of as a large table.
+
+Each row corresponds to one token in the vocabulary.
+
+Each row contains that token's embedding vector.
+
+
+For example:
+
+vocab_size = 5
+embedding_dim = 3
+
+The embedding table could conceptually look like:
+
+Token ID       Embedding
+
+0              [ 0.2,  0.7, -0.1]
+1              [-0.4,  0.3,  0.8]
+2              [ 0.6, -0.5,  0.2]
+3              [ 0.1,  0.9, -0.7]
+4              [-0.2,  0.4,  0.5]
+
+
+This can also be viewed as a matrix:
+
+          Dimension
+          1     2     3
+
+Token 0   0.2   0.7  -0.1
+Token 1  -0.4   0.3   0.8
+Token 2   0.6  -0.5   0.2
+Token 3   0.1   0.9  -0.7
+Token 4  -0.2   0.4   0.5
+
+
+The shape of the embedding table is therefore:
+
+(vocab_size, embedding_dim)
+
+In this example:
+
+(5, 3)
+
+
+9. IMPLEMENTING AN EMBEDDING IN PYTORCH
+---------------------------------------
+
+PyTorch provides:
+
+nn.Embedding()
+
+Example:
+
+import torch
+import torch.nn as nn
+
+vocab_size = 10000
+embedding_dim = 100
+
+embedding = nn.Embedding(vocab_size, embedding_dim)
+
+
+This creates an embedding table with:
+
+10,000 rows
+
+and:
+
+100 values per row.
+
+Therefore its shape is:
+
+(10000, 100)
+
+
+Conceptually:
+
+10,000 possible tokens
+        |
+        v
+Each token has 100 values
+        |
+        v
+10,000 x 100 embedding table
+
+
+10. VOCAB_SIZE
+--------------
+
+The first argument to nn.Embedding() is the vocabulary size.
+
+Example:
+
+nn.Embedding(10000, 100)
+
+Here:
+
+vocab_size = 10000
+
+means the embedding layer can represent 10,000 different token IDs.
+
+Valid IDs therefore range from:
+
+0
+
+to:
+
+9999
+
+
+The vocabulary size depends on the tokenisation system being used.
+
+A word-level model might have thousands of different tokens.
+
+A character-level model normally has a much smaller vocabulary because it
+only needs to represent the unique characters found in the text.
+
+
+11. EMBEDDING_DIM
+-----------------
+
+The second argument is the embedding dimension.
+
+Example:
+
+nn.Embedding(10000, 100)
+
+Here:
+
+embedding_dim = 100
+
+means every token receives a vector containing 100 numerical values.
+
+Therefore:
+
+Token 0 -> 100 values
+Token 1 -> 100 values
+Token 2 -> 100 values
+...
+Token 9999 -> 100 values
+
+
+12. INPUT INDICES
+-----------------
+
+The embedding layer receives token IDs as its input.
+
+For example:
+
+input_indices = torch.LongTensor([1, 5, 3, 2])
+
+This represents four token IDs:
+
+1
+5
+3
+2
+
+These IDs tell the embedding layer which rows of the embedding table should
+be retrieved.
+
+
+13. EMBEDDING LOOKUP
+--------------------
+
+The operation:
+
+embedded_output = embedding(input_indices)
+
+can be understood as a lookup operation.
+
+Given:
+
+input_indices = [1, 5, 3, 2]
+
+PyTorch retrieves:
+
+embedding for token 1
+embedding for token 5
+embedding for token 3
+embedding for token 2
+
+
+Conceptually:
+
+Token IDs
+
+[1, 5, 3, 2]
+
+        |
+        v
+
+Embedding table
+
+        |
+        v
+
+Retrieve rows 1, 5, 3 and 2
+
+        |
+        v
+
+Embedding vectors
+
+
+The token ID therefore acts like an index into the embedding table.
+
+
+14. OUTPUT SHAPE
+----------------
+
+Suppose:
+
+input_indices = torch.LongTensor([1, 5, 3, 2])
+
+There are four input tokens.
+
+If:
+
+embedding_dim = 100
+
+each token becomes a vector containing 100 values.
+
+Therefore the output shape is:
+
+(4, 100)
+
+PyTorch displays this as:
+
+torch.Size([4, 100])
+
+
+This can be understood as:
+
+4 tokens
+   x
+100 values per token
+
+
+The general relationship is:
+
+(number of tokens, embedding dimension)
+
+
+15. WHY LONGTENSOR IS USED
+--------------------------
+
+Embedding layers expect integer indices.
+
+The input values represent positions in the embedding table rather than
+continuous numerical data.
+
+For example:
+
+input_indices = torch.LongTensor([1, 5, 3, 2])
+
+uses 64-bit integer values.
+
+The embedding layer can then interpret each value as a row index.
+
+A value such as:
+
+5
+
+means:
+
+"retrieve row 5 from the embedding table."
+
+
+16. EMBEDDINGS ARE LEARNABLE PARAMETERS
+---------------------------------------
+
+One of the most important properties of nn.Embedding is that the embedding
+vectors are learnable.
+
+When the embedding layer is initially created, PyTorch gives the embedding
+table initial numerical values.
+
+These are not yet useful representations learned from the training text.
+
+During training, the model makes predictions and calculates a loss.
+
+Backpropagation then calculates how the model's parameters should change.
+
+The embedding vectors are among these parameters.
+
+Therefore:
+
+Initial embedding vectors
+        |
+        v
+Model processes training data
+        |
+        v
+Model makes predictions
+        |
+        v
+Calculate loss
+        |
+        v
+Backpropagation
+        |
+        v
+Update parameters
+        |
+        v
+Embedding vectors change
+
+
+The embeddings therefore develop as part of the model's training process.
+
+
+17. EMBEDDINGS VS RANDOM IDs
+----------------------------
+
+Suppose two tokens have IDs:
+
+Token A -> 7
+Token B -> 8
+
+The fact that the numbers 7 and 8 are close together has no meaningful
+importance.
+
+The IDs were simply assigned during tokenisation.
+
+After embedding lookup, however:
+
+Token A -> [0.2, -0.8, 0.4, ...]
+Token B -> [0.3, -0.7, 0.5, ...]
+
+the vectors are parameters that the model can learn.
+
+It is therefore the VECTOR REPRESENTATION, not the integer ID, that becomes
+part of the neural-network computation.
+
+
+18. VECTOR SIMILARITY
+---------------------
+
+Because embeddings are vectors, mathematical methods can be used to compare
+them.
+
+Two vectors can have different directions and distances in the embedding
+space.
+
+In larger trained language models, learned representations can capture
+useful relationships between tokens.
+
+However, it is important not to assume that each individual coordinate has
+a simple human-readable meaning.
+
+For example, it would usually be incorrect to say:
+
+Dimension 1 = gender
+Dimension 2 = size
+Dimension 3 = emotion
+
+The useful information is generally distributed across many dimensions.
+
+
+19. EMBEDDINGS AND LINEAR ALGEBRA
+---------------------------------
+
+Once tokens are represented as vectors, they can participate in the linear
+algebra operations used by neural networks.
+
+For example:
+
+embedding vector
+       |
+       v
+linear transformation
+       |
+       v
+matrix multiplication
+       |
+       v
+new representation
+
+
+This connects embeddings to the previous PyTorch concepts:
+
+- tensors
+- vectors
+- matrices
+- matrix multiplication
+- nn.Linear()
+- learned weights
+
+The language model is therefore able to transform token representations
+mathematically as information moves through the network.
+
+
+20. EMBEDDINGS VS ONE-HOT REPRESENTATIONS
+------------------------------------------
+
+Another possible way of representing a token is with a one-hot vector.
+
+Suppose there are five tokens.
+
+Token 2 could be represented as:
+
+[0, 0, 1, 0, 0]
+
+Only one position contains a 1.
+
+All other positions contain 0.
+
+For a vocabulary containing 10,000 tokens, however, a one-hot vector would
+contain 10,000 values for every token, almost all of which would be zero.
+
+An embedding instead represents the token using a smaller dense vector.
+
+For example:
+
+10,000-dimensional one-hot representation
+
+could be mapped to:
+
+100-dimensional embedding representation.
+
+
+Embedding vectors are described as dense because their values are not
+restricted to mostly zeros.
+
+
+21. EMBEDDING LOOKUP AS A LEARNED REPRESENTATION
+-------------------------------------------------
+
+An embedding layer effectively performs:
+
+Token ID
+    |
+    v
+Find corresponding row
+    |
+    v
+Return embedding vector
+
+
+For example:
+
+ID = 3
+
+Embedding table:
+
+Row 0 -> [...]
+Row 1 -> [...]
+Row 2 -> [...]
+Row 3 -> [0.14, -0.63, 0.27]
+Row 4 -> [...]
+
+Output:
+
+[0.14, -0.63, 0.27]
+
+
+The important part is that row 3 is not permanently fixed.
+
+Its values can change during training.
+
+
+22. EMBEDDING PARAMETERS
+------------------------
+
+The number of parameters in a basic embedding table is:
+
+vocab_size x embedding_dim
+
+
+For example:
+
+vocab_size = 10,000
+embedding_dim = 100
+
+Number of parameters:
+
+10,000 x 100
+
+=
+
+1,000,000 parameters
+
+
+These parameters are the numerical values contained in the embedding
+matrix.
+
+Increasing the vocabulary size or embedding dimension therefore increases
+the number of parameters and the amount of memory required.
+
+
+23. EMBEDDINGS IN MY CHARACTER-LEVEL MODEL
+-------------------------------------------
+
+The tutorial example uses:
+
+vocab_size = 10000
+
+However, my current language model uses character-level tokenisation.
+
+Earlier I created the vocabulary using:
+
+chars = sorted(set(text))
+
+Each unique character receives an integer ID.
+
+For example:
+
+character
+    |
+    v
+integer token ID
+    |
+    v
+embedding lookup
+    |
+    v
+embedding vector
+
+
+Therefore, my actual vocabulary size can be determined from:
+
+len(chars)
+
+rather than automatically using 10,000.
+
+This means the embedding table only needs a row for each possible character
+in the vocabulary.
+
+
+24. FROM THE ODYSSEY TO EMBEDDINGS
+----------------------------------
+
+The stages of my project now connect as follows:
+
+The Odyssey text
+      |
+      v
+Read text into Python
+      |
+      v
+Find unique characters
+      |
+      v
+Create vocabulary
+      |
+      v
+Assign each character an integer ID
+      |
+      v
+Encode text
+      |
+      v
+Store token IDs in PyTorch tensors
+      |
+      v
+Pass token IDs into an embedding layer
+      |
+      v
+Retrieve a vector for each token
+      |
+      v
+Process vectors through the neural network
+
+
+This represents the transition from raw language to numerical information
+that the model can learn from.
+
+
+25. TOKEN EMBEDDINGS AND CONTEXT
+--------------------------------
+
+A basic embedding lookup gives a token its learned vector.
+
+However, the same token may appear in many different contexts.
+
+A basic token embedding alone does not fully describe the surrounding
+sentence or sequence.
+
+Later stages of the language model will process these representations
+together so that information from the surrounding context can influence
+the model's internal representations.
+
+Therefore:
+
+Token embedding
+
+is the STARTING numerical representation of the token.
+
+It is not the complete understanding of the token in context.
+
+
+26. EMBEDDINGS AND ATTENTION
+----------------------------
+
+Embeddings become particularly important when moving towards transformer
+models.
+
+The general idea is:
+
+Tokens
+   |
+   v
+Token IDs
+   |
+   v
+Embeddings
+   |
+   v
+Vectors representing tokens
+   |
+   v
+Attention / neural-network operations
+   |
+   v
+Context-dependent representations
+   |
+   v
+Predictions
+
+
+Attention mechanisms operate on numerical representations.
+
+Embeddings therefore provide the vectors that allow textual tokens to enter
+this mathematical processing system.
+
+
+27. SIMPLE IMPLEMENTATION EXAMPLE
+---------------------------------
+
+import torch
+import torch.nn as nn
+
+# Number of possible tokens
+vocab_size = 10000
+
+# Number of values used to represent each token
+embedding_dim = 100
+
+# Create the learnable embedding table
+embedding = nn.Embedding(vocab_size, embedding_dim)
+
+# Four token IDs
+input_indices = torch.LongTensor([1, 5, 3, 2])
+
+# Look up the embedding vector for each token
+embedded_output = embedding(input_indices)
+
+# Four tokens, each represented by 100 values
+print(embedded_output.shape)
+
+
+Output:
+
+torch.Size([4, 100])
+
+
+28. READING THE CODE CONCEPTUALLY
+---------------------------------
+
+The code:
+
+embedding = nn.Embedding(10000, 100)
+
+means:
+
+"Create a learnable table for 10,000 possible tokens, where every token is
+represented using a vector containing 100 values."
+
+
+The code:
+
+embedding(input_indices)
+
+means:
+
+"Use these token IDs to retrieve their corresponding vectors from the
+embedding table."
+
+
+The result:
+
+torch.Size([4, 100])
+
+means:
+
+"There were four input tokens and each one has now been represented by a
+100-dimensional vector."
+
+
+29. IMPORTANT DISTINCTIONS
+--------------------------
+
+TOKEN
+
+An individual unit produced by the tokenisation system.
+
+
+TOKEN ID
+
+An integer used to identify a token.
+
+Example:
+
+42
+
+
+VECTOR
+
+An ordered collection of numerical values.
+
+Example:
+
+[0.3, -0.8, 0.1, 0.7]
+
+
+EMBEDDING
+
+A vector representation associated with a token or other item.
+
+
+EMBEDDING TABLE
+
+A learnable matrix containing an embedding vector for every possible token.
+
+
+EMBEDDING DIMENSION
+
+The number of values used in each embedding vector.
+
+
+VOCABULARY SIZE
+
+The total number of possible tokens recognised by the tokenisation system.
+
+
+30. KEY IDEAS TO REMEMBER
+-------------------------
+
+1. Neural networks require numerical representations of text.
+
+2. Tokenisation converts text into tokens.
+
+3. Encoding assigns integer IDs to those tokens.
+
+4. Token IDs are identifiers, not meaningful numerical measurements.
+
+5. An embedding maps each token ID to a vector.
+
+6. A vector is an ordered collection of numerical values.
+
+7. embedding_dim determines how many values represent each token.
+
+8. vocab_size determines how many different token embeddings are stored.
+
+9. nn.Embedding(vocab_size, embedding_dim) creates a learnable embedding
+   table.
+
+10. The embedding table has shape:
+
+    (vocab_size, embedding_dim)
+
+11. Passing token IDs into the embedding layer retrieves the corresponding
+    rows of this table.
+
+12. Four tokens with embedding dimension 100 produce an output with shape:
+
+    (4, 100)
+
+13. Embeddings are model parameters and can be updated during training.
+
+14. Embeddings allow tokens to participate in matrix and tensor operations.
+
+15. The individual dimensions of an embedding should not automatically be
+    interpreted as specific human-readable properties.
+
+16. Embeddings provide the starting numerical representations that later
+    neural-network and attention operations can process.
+
+17. In my character-level model, the vocabulary size comes from the number
+    of unique characters rather than the tutorial's example vocabulary of
+    10,000 tokens.
+
+
+31. CORE IDEA
+-------------
+
+The most important idea from this section is:
+
+TEXT IS DISCRETE, BUT NEURAL NETWORKS WORK WITH NUMBERS.
+
+Tokenisation gives each piece of text an ID:
+
+Character -> Token ID
+
+The embedding layer then converts that ID into a learnable vector:
+
+Token ID -> Embedding Vector
+
+The neural network can then perform mathematical operations on these
+vectors:
+
+Embedding Vector -> Neural Network -> Prediction
+
+
+In short:
+
+TEXT
+  |
+  v
+TOKEN
+  |
+  v
+TOKEN ID
+  |
+  v
+EMBEDDING LOOKUP
+  |
+  v
+VECTOR
+  |
+  v
+NEURAL-NETWORK COMPUTATION
