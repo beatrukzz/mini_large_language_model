@@ -1,0 +1,1012 @@
+DOT PRODUCTS AND MATRIX MULTIPLICATION
+Mini Large Language Model – Mathematical Foundations
+=====================================================
+
+
+1. WHY THIS MATTERS
+-------------------
+
+Matrix multiplication is one of the fundamental mathematical operations
+behind neural networks and large language models.
+
+An LLM represents information using vectors and matrices. Operations such
+as linear layers, embeddings and later attention mechanisms rely heavily
+on multiplying these numerical representations.
+
+Understanding matrix multiplication therefore helps explain what the model
+is actually doing mathematically rather than treating PyTorch operations
+as black-box functions.
+
+
+2. VECTORS
+----------
+
+A vector is an ordered collection of numbers.
+
+Example:
+
+a = [2, 3, 4]
+
+This is a three-dimensional vector.
+
+In machine learning, vectors can represent information such as:
+
+- token embeddings
+- model features
+- hidden representations
+- weights
+- queries, keys and values in attention
+
+The individual values are called components of the vector.
+
+
+3. THE DOT PRODUCT
+------------------
+
+The dot product takes two vectors of the same length and produces a
+single number (a scalar).
+
+Suppose:
+
+a = [a1, a2, a3]
+
+b = [b1, b2, b3]
+
+Then:
+
+a · b = a1b1 + a2b2 + a3b3
+
+
+Example:
+
+a = [1, 2, 3]
+
+b = [4, 5, 6]
+
+Then:
+
+a · b
+= (1 × 4) + (2 × 5) + (3 × 6)
+= 4 + 10 + 18
+= 32
+
+
+Therefore:
+
+[1, 2, 3] · [4, 5, 6] = 32
+
+
+The procedure is:
+
+1. Multiply corresponding components.
+2. Add the products together.
+3. The result is one scalar value.
+
+
+4. DOT PRODUCT IN PYTORCH
+-------------------------
+
+A simple example is:
+
+a = torch.tensor([1., 2., 3.])
+b = torch.tensor([4., 5., 6.])
+
+result = torch.dot(a, b)
+
+print(result)
+
+
+The result is:
+
+tensor(32.)
+
+
+The calculation performed is:
+
+(1 × 4) + (2 × 5) + (3 × 6)
+
+= 32
+
+
+5. GEOMETRIC INTERPRETATION OF THE DOT PRODUCT
+-----------------------------------------------
+
+The dot product also has a geometric interpretation.
+
+For vectors a and b:
+
+a · b = ||a|| ||b|| cos(theta)
+
+where:
+
+||a|| = magnitude of vector a
+||b|| = magnitude of vector b
+theta = angle between the vectors
+
+
+This means the dot product contains information about how strongly two
+vectors point in similar directions.
+
+Broadly:
+
+large positive dot product
+-> vectors are strongly aligned
+
+dot product near zero
+-> vectors are close to perpendicular
+
+negative dot product
+-> vectors point substantially in opposite directions
+
+
+The exact value also depends on the magnitudes of the vectors, not only
+their directions.
+
+
+6. WHY THE DOT PRODUCT MATTERS FOR LLMS
+---------------------------------------
+
+Later in a transformer, attention uses dot products when comparing
+different vector representations.
+
+In particular, attention compares query and key vectors.
+
+A simplified idea is:
+
+query · key
+
+The resulting score helps measure how strongly one token should attend
+to another.
+
+This means the same dot-product operation introduced here will later
+become part of the self-attention mechanism.
+
+
+7. WHAT IS A MATRIX?
+--------------------
+
+A matrix is a rectangular arrangement of numbers.
+
+Example:
+
+A = [1  2]
+    [3  4]
+    [5  6]
+
+
+This matrix has:
+
+3 rows
+2 columns
+
+Therefore its dimensions are:
+
+3 × 2
+
+
+In PyTorch:
+
+A = torch.tensor([
+    [1, 2],
+    [3, 4],
+    [5, 6]
+])
+
+
+Its shape is:
+
+torch.Size([3, 2])
+
+
+8. MATRIX MULTIPLICATION
+------------------------
+
+Matrix multiplication extends the idea of the dot product.
+
+Each value in the resulting matrix is produced by taking:
+
+one ROW from the first matrix
+
+and
+
+one COLUMN from the second matrix
+
+and calculating their dot product.
+
+
+For example:
+
+A = [1  2]
+    [3  4]
+    [5  6]
+
+
+B = [7   8   9]
+    [10 11  12]
+
+
+A has dimensions:
+
+3 × 2
+
+B has dimensions:
+
+2 × 3
+
+
+Therefore:
+
+AB
+
+has dimensions:
+
+3 × 3
+
+
+9. THE ROW-COLUMN RULE
+----------------------
+
+To calculate the first value in AB:
+
+Take the first row of A:
+
+[1, 2]
+
+and the first column of B:
+
+[7, 10]
+
+Calculate their dot product:
+
+(1 × 7) + (2 × 10)
+
+= 7 + 20
+
+= 27
+
+
+For the next value:
+
+First row of A:
+
+[1, 2]
+
+Second column of B:
+
+[8, 11]
+
+Dot product:
+
+(1 × 8) + (2 × 11)
+
+= 8 + 22
+
+= 30
+
+
+The third value is:
+
+(1 × 9) + (2 × 12)
+
+= 9 + 24
+
+= 33
+
+
+Therefore the first row of the result is:
+
+[27, 30, 33]
+
+
+Repeating this process gives:
+
+AB = [27   30   33]
+     [61   68   75]
+     [95  106  117]
+
+
+10. MATRIX DIMENSION RULE
+-------------------------
+
+Matrix multiplication is only possible when the INNER dimensions match.
+
+If:
+
+A has dimensions:
+
+m × n
+
+and:
+
+B has dimensions:
+
+n × p
+
+then:
+
+AB
+
+has dimensions:
+
+m × p
+
+
+The rule can be remembered as:
+
+(m × n)(n × p)
+     ^   ^
+     must match
+
+
+The result keeps the OUTER dimensions:
+
+m × p
+
+
+Example:
+
+(3 × 2)(2 × 3)
+
+The inner dimensions are:
+
+2 = 2
+
+so multiplication is valid.
+
+The resulting dimensions are:
+
+3 × 3
+
+
+11. INVALID MATRIX MULTIPLICATION
+---------------------------------
+
+Suppose:
+
+A = 3 × 2
+
+B = 3 × 2
+
+
+Then:
+
+(3 × 2)(3 × 2)
+
+cannot be multiplied in this order because:
+
+2 != 3
+
+The inner dimensions do not match.
+
+
+This is one of the most common causes of shape errors when working with
+neural networks.
+
+
+12. MATRIX MULTIPLICATION IN PYTORCH
+------------------------------------
+
+PyTorch provides several ways of performing matrix multiplication.
+
+For example:
+
+result = A @ B
+
+or:
+
+result = torch.matmul(A, B)
+
+
+For two ordinary matrices, these perform the same matrix multiplication.
+
+Example:
+
+A = torch.tensor([
+    [1, 2],
+    [3, 4],
+    [5, 6]
+])
+
+B = torch.tensor([
+    [7, 8, 9],
+    [10, 11, 12]
+])
+
+result = torch.matmul(A, B)
+
+print(result)
+
+
+Result:
+
+tensor([
+    [27,  30,  33],
+    [61,  68,  75],
+    [95, 106, 117]
+])
+
+
+13. @ VS TORCH.MATMUL()
+-----------------------
+
+The @ operator provides convenient matrix-multiplication syntax.
+
+Therefore:
+
+A @ B
+
+and:
+
+torch.matmul(A, B)
+
+can represent the same matrix multiplication.
+
+Using @ can make mathematical code concise, while torch.matmul() makes
+the operation explicit.
+
+
+14. MATRIX MULTIPLICATION IS NOT ELEMENT-WISE MULTIPLICATION
+------------------------------------------------------------
+
+This distinction is important.
+
+Suppose:
+
+A = [1  2]
+    [3  4]
+
+B = [5  6]
+    [7  8]
+
+
+Element-wise multiplication:
+
+A * B
+
+means:
+
+[1×5  2×6]
+[3×7  4×8]
+
+=
+
+[5   12]
+[21  32]
+
+
+Matrix multiplication:
+
+A @ B
+
+instead uses row-column dot products:
+
+[19  22]
+[43  50]
+
+
+Therefore:
+
+*          -> element-wise multiplication
+
+@          -> matrix multiplication
+
+torch.matmul()
+           -> matrix multiplication
+
+
+These are different mathematical operations.
+
+
+15. MATRIX MULTIPLICATION AS MANY DOT PRODUCTS
+-----------------------------------------------
+
+A useful way to understand matrix multiplication is:
+
+MATRIX MULTIPLICATION = MANY DOT PRODUCTS
+
+
+Each entry in the output matrix is produced from:
+
+row · column
+
+
+For:
+
+C = AB
+
+each element C[i,j] is obtained from the dot product between:
+
+row i of A
+
+and:
+
+column j of B
+
+
+This is the main mathematical connection between dot products and matrix
+multiplication.
+
+
+16. WHY MATRIX MULTIPLICATION MATTERS FOR NEURAL NETWORKS
+---------------------------------------------------------
+
+Neural networks repeatedly transform vectors using learned matrices.
+
+A simplified neural-network transformation can be written as:
+
+y = Wx + b
+
+where:
+
+x = input vector
+W = matrix of learned weights
+b = bias vector
+y = output vector
+
+
+The matrix W determines how the input features are combined to create
+new features.
+
+During training, the values inside W are adjusted so that the network
+produces better predictions.
+
+
+17. CONNECTION TO NN.LINEAR()
+-----------------------------
+
+Earlier I used:
+
+nn.Linear()
+
+A linear layer performs a learned transformation involving a weight
+matrix.
+
+Conceptually:
+
+Input vector
+      |
+      v
+Multiply by learned weight matrix
+      |
+      v
+Add bias
+      |
+      v
+Output vector
+
+
+Therefore the matrix multiplication being studied here is directly
+connected to the neural-network layers used by the language model.
+
+
+18. CONNECTION TO EMBEDDINGS
+----------------------------
+
+Earlier, token IDs were converted into embedding vectors.
+
+For example:
+
+Token ID
+   |
+   v
+Embedding lookup
+   |
+   v
+[0.21, -0.43, 0.76, ...]
+
+
+Once a token has been represented as a vector, the neural network can
+apply learned matrix transformations to it.
+
+Therefore:
+
+Token
+   |
+   v
+Token ID
+   |
+   v
+Embedding vector
+   |
+   v
+Matrix multiplication
+   |
+   v
+New representation
+
+
+This is one reason vectors and matrices are fundamental to neural
+networks.
+
+
+19. MATRIX MULTIPLICATION AND ATTENTION
+---------------------------------------
+
+Matrix multiplication becomes even more important when implementing
+self-attention.
+
+The model will eventually construct:
+
+Q = Queries
+K = Keys
+V = Values
+
+
+Attention involves comparing queries with keys.
+
+At a high level, this involves a matrix multiplication related to:
+
+Q @ K^T
+
+
+This efficiently calculates many query-key dot products at once.
+
+Rather than calculating every pair individually in Python, matrix
+multiplication allows the calculations to be performed together.
+
+The resulting scores are later processed to determine how much attention
+each token should give to other tokens.
+
+
+20. MATMUL IMPLEMENTATION
+-------------------------
+
+The tutorial demonstrates torch.matmul() as PyTorch's implementation of
+matrix multiplication.
+
+Example:
+
+result = torch.matmul(A, B)
+
+
+Before performing matrix multiplication, two important properties should
+be checked:
+
+1. SHAPE
+
+The inner dimensions must be compatible.
+
+Example:
+
+(3 × 2) @ (2 × 3)
+
+is valid.
+
+
+2. DATA TYPE
+
+The tensors must use compatible data types for the matrix multiplication.
+
+For example, attempting to directly multiply:
+
+torch.int64
+
+with:
+
+torch.float32
+
+can produce a dtype error.
+
+
+21. INT VS FLOAT
+----------------
+
+A tensor has a data type, known as its dtype.
+
+Two important examples are:
+
+torch.int64
+torch.float32
+
+
+INT64
+
+Stores integers such as:
+
+-5
+0
+12
+103
+
+
+FLOAT32
+
+Stores floating-point values such as:
+
+0.25
+-1.73
+3.14159
+
+
+Neural-network parameters normally require floating-point values because
+training involves small continuous numerical adjustments.
+
+
+22. THE DTYPE ERROR I ENCOUNTERED
+---------------------------------
+
+I attempted:
+
+result = torch.matmul(int_64, float_32)
+
+
+PyTorch returned an error similar to:
+
+expected m1 and m2 to have the same dtype,
+but got: long int != float
+
+
+This happened because:
+
+int_64.dtype
+
+was:
+
+torch.int64
+
+
+while:
+
+float_32.dtype
+
+was:
+
+torch.float32
+
+
+Even though the matrix SHAPES could be compatible, their DATA TYPES were
+not compatible for this operation.
+
+
+23. FIXING THE DTYPE ERROR
+--------------------------
+
+The integer tensor can be converted to float32:
+
+int_64 = int_64.to(torch.float32)
+
+
+Now:
+
+int_64.dtype
+-> torch.float32
+
+float_32.dtype
+-> torch.float32
+
+
+Matrix multiplication can then be performed:
+
+result = torch.matmul(int_64, float_32)
+
+
+This demonstrates that successful matrix multiplication in PyTorch
+requires considering both:
+
+SHAPE
+
+and
+
+DTYPE
+
+
+24. TOKEN IDS VS MODEL PARAMETERS
+---------------------------------
+
+This distinction connects directly to the language model.
+
+Token IDs are discrete identifiers.
+
+For example:
+
+'a' -> 17
+'b' -> 18
+'c' -> 19
+
+
+These should be integers.
+
+This is why encoded text can use:
+
+dtype=torch.long
+
+
+However, embeddings and neural-network parameters contain continuous
+values.
+
+For example:
+
+[0.184, -0.729, 0.314, ...]
+
+
+These are typically floating-point values.
+
+
+Therefore:
+
+Raw text
+    |
+    v
+Token IDs
+    |
+    | integer / torch.long
+    v
+Embedding lookup
+    |
+    v
+Embedding vectors
+    |
+    | floating point
+    v
+Matrix operations
+    |
+    v
+Neural-network calculations
+
+
+25. COMPUTATIONAL IMPORTANCE
+----------------------------
+
+Large language models perform enormous numbers of matrix multiplications.
+
+Instead of processing individual values one at a time, numerical libraries
+can perform large matrix operations efficiently.
+
+This is also one of the reasons GPUs are useful for neural-network
+training.
+
+Large matrix and tensor operations contain many calculations that can be
+performed in parallel.
+
+Therefore there is a direct connection between:
+
+Linear algebra
+      |
+      v
+Matrix multiplication
+      |
+      v
+Neural networks
+      |
+      v
+Parallel computation
+      |
+      v
+GPU acceleration
+
+
+26. CONNECTION TO MY MINI LLM
+-----------------------------
+
+The concepts developed so far now connect:
+
+The Odyssey
+    |
+    v
+Character tokenisation
+    |
+    v
+Integer token IDs
+    |
+    v
+PyTorch tensors
+    |
+    v
+Embedding vectors
+    |
+    v
+Matrix multiplication / linear transformations
+    |
+    v
+Neural-network processing
+
+
+Later:
+
+Embedding representations
+    |
+    v
+Queries, Keys and Values
+    |
+    v
+Dot products / matrix multiplication
+    |
+    v
+Attention scores
+    |
+    v
+Softmax
+    |
+    v
+Attention probabilities
+
+
+Therefore the dot-product and matrix-multiplication section provides some
+of the linear-algebra foundations needed to understand the later
+transformer implementation.
+
+
+27. KEY IDEAS TO REMEMBER
+-------------------------
+
+1. A vector is an ordered collection of numbers.
+
+2. The dot product takes two vectors of equal length and returns a scalar.
+
+3. A dot product is calculated by multiplying corresponding components
+   and adding the results.
+
+4. Matrix multiplication can be understood as repeated row-column dot
+   products.
+
+5. For:
+
+   (m × n)(n × p)
+
+   the inner dimensions must match.
+
+6. The resulting matrix has dimensions:
+
+   m × p
+
+7. @ and torch.matmul() perform matrix multiplication.
+
+8. Matrix multiplication is different from element-wise multiplication.
+
+9. Neural networks use matrix multiplication to transform numerical
+   representations using learned weights.
+
+10. Embeddings provide vectors that can then be processed using these
+    transformations.
+
+11. Attention later uses dot products to compare query and key vectors.
+
+12. Matrix multiplication allows many dot products to be calculated
+    efficiently at once.
+
+13. PyTorch tensors also have data types (dtypes).
+
+14. torch.int64 represents integers, while torch.float32 represents
+    floating-point numbers.
+
+15. Compatible shapes alone are not always sufficient; tensors used in
+    matrix multiplication must also have compatible dtypes.
+
+16. Token IDs are naturally represented as integers, while embeddings,
+    weights and most neural-network calculations use floating-point
+    values.
+
+
+28. CORE IDEA
+-------------
+
+The most important mathematical relationship from this section is:
+
+DOT PRODUCT
+    |
+    v
+Combines two vectors into one scalar
+
+
+MATRIX MULTIPLICATION
+    |
+    v
+Performs many row-column dot products simultaneously
+
+
+NEURAL NETWORK
+    |
+    v
+Uses matrix multiplication with learned weights to transform vectors
+
+
+TRANSFORMER ATTENTION
+    |
+    v
+Uses dot products and matrix multiplication to compare token
+representations
+
+
+Matrix multiplication is therefore not simply a PyTorch function being
+used by the project. It is one of the fundamental mathematical operations
+that makes the neural network itself possible.
